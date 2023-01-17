@@ -1,0 +1,10 @@
+Window:
+  theme: Dark
+  color: DARK_GRAY
+  height: 600
+  width: 1200
+
+Body:
+  fontSize: 10
+  fontStyle: PLAIN
+  theme: dark
