@@ -1,31 +1,48 @@
 package org.editor;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 public class BodyFrame extends JPanel{
-        private JToolBar toolBarTop = new JToolBar();
-        private JPanel panelBottom = new JPanel();
-        private JComboBox changeSyntaxComboBox = new JComboBox<>();
-        private JButton button1 = new JButton();
-        private JLabel bottomLabel = new JLabel();
-        private JPanel textAreaPanel = new JPanel();
-
-        private RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
-
+    RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
+    JSplitPane TextAreaJSplitPane = new JSplitPane();
     BodyFrame() {
-            {
-                bottomLabel.setText("0:0");
-                panelBottom.add(bottomLabel, BorderLayout.WEST);
-            }
 
-            {
-                textAreaPanel.add(textArea);
-            }
-            add(toolBarTop, BorderLayout.NORTH);
-            add(textAreaPanel, BorderLayout.CENTER);
-//            add(panelBottom, BorderLayout.SOUTH);
+    }
+
+    public JPanel TextPanel(String TextAreaTheme, String FontStyle, int FontSize){
+        JPanel p = new JPanel(new BorderLayout());
+
+        textArea = new RSyntaxTextArea(32, 80);
+        textArea.setSyntaxEditingStyle(null);
+        textArea.setCodeFoldingEnabled(true);
+        setThemes(TextAreaTheme, textArea);
+
+        Font font=new Font(FontStyle,Font.PLAIN,FontSize);
+        textArea.setFont(font);
+
+//        fileBar = new JTabbedPane();
+//        fileBar.addTab(filename, sp);
+//        fileBar.setSelectedComponent(sp);
+
+        RTextScrollPane sp = new RTextScrollPane(textArea);
+        p.add(sp, BorderLayout.CENTER);
+
+        return p;
+    }
+
+    public void setThemes(String theme, RSyntaxTextArea text) {
+        Theme themes;
+        try {
+            themes = Theme.load(getClass().getResourceAsStream("/themes/"+theme+".xml"));
+            themes.apply(text);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 }

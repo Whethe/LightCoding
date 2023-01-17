@@ -2,6 +2,7 @@ package org.editor;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
+import com.formdev.flatlaf.icons.FlatTabbedPaneCloseIcon;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -10,10 +11,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.function.BiConsumer;
+
+import static com.formdev.flatlaf.FlatClientProperties.*;
 
 public class MainFrame extends JFrame {
     private volatile static MainFrame mainFrame;
+
+    private String recentFile;
 
     private MainFrame (){
         this(DEFAULT_CONFIG);
@@ -61,25 +68,25 @@ public class MainFrame extends JFrame {
         setVisible(true);
 
 //        jPanel.add(new JLabel("0:0"));
-        add(TextPanel(), BorderLayout.CENTER);
         add(contentPanel, BorderLayout.NORTH);
-//        add(jPanel, BorderLayout.SOUTH);
+        add(TextPanel(), BorderLayout.CENTER);
+        add(controlPanel, BorderLayout.SOUTH);
+
+        if (recentFile == null){
+            changeSyntaxComboBox.setSelectedIndex(14);
+        }
     }
 
     private static final Config DEFAULT_CONFIG = new Config();
-
-    private RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
-
-    private JPanel jPanel = new JPanel();
-
-    private JPanel contentPanel = new JPanel();
+    JSplitPane TextAreaJSplitPane = new JSplitPane();
+    RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
+    JTabbedPane closableTabsLabel = new JTabbedPane();
+    JPanel jPanel = new JPanel();
+    JPanel contentPanel = new JPanel();
 
     private static int windowHeight;
-
     private static int windowWidth;
-
     private static int screenHeight;
-
     private static int screenWidth;
 
     private Config config;
@@ -122,11 +129,16 @@ public class MainFrame extends JFrame {
     JButton pasteButton = new JButton();
     JButton searchButton = new JButton();
     JButton refreshButton = new JButton();
+    JButton addButton = new JButton();
     JButton sidebarButton = new JButton();
 
     //---- controlBar -----------------------
     JToolBar controlBar = new JToolBar();
     JLabel jLabel = new JLabel();
+    JPanel controlPanel = new JPanel();
+    String[] listData = new String[]{"C", "C#", "C++", "CSS", "GO", "HTML","Java","Java Script", "JSON", "Lua",
+            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "Rust", "SQL", "XML", "XSL", "YAML"};
+    JComboBox<String> changeSyntaxComboBox = new JComboBox<String>(listData);
 
     //======== menuBar1 ========
     {
@@ -308,6 +320,11 @@ public class MainFrame extends JFrame {
             refreshButton.setToolTipText("Refresh");
             toolBar.add(refreshButton);
 
+            //---- addButton ----
+            addButton.setToolTipText("New File (Ctrl+N)");
+            addButton.addActionListener(this::actionPerformed);
+            toolBar2.add(addButton);
+
             //---- sidebarButton ----
             sidebarButton.setToolTipText("Sidebar");
             toolBar2.add(sidebarButton);
@@ -319,6 +336,7 @@ public class MainFrame extends JFrame {
             pasteButton.setIcon( new FlatSVGIcon( "images/menu-paste.svg" ) );
             searchButton.setIcon( new FlatSVGIcon( "images/search2.svg" ) );
             refreshButton.setIcon( new FlatSVGIcon( "images/refresh.svg" ) );
+            addButton.setIcon( new FlatSVGIcon( "images/add.svg" ) );
             sidebarButton.setIcon( new FlatSVGIcon( "images/sidebar.svg" ) );
         }
         JPanel jPanel1 = new JPanel();
@@ -328,12 +346,28 @@ public class MainFrame extends JFrame {
         jPanel1.add(toolBar);
         jPanel2.setLayout(new FlowLayout(FlowLayout.RIGHT));
         jPanel2.add(toolBar2);
-        contentPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        contentPanel.add(toolBar);
+        contentPanel.setLayout(new BorderLayout());
+        contentPanel.add(toolBar, BorderLayout.WEST);
+        contentPanel.add(toolBar2, BorderLayout.EAST);
 
         //======== controlBar Button ========
         {
+            controlBar.setMargin(new Insets(0, 0, 0, 0));
+            jLabel.setText("Line 1, Column 1");
+            controlBar.add(jLabel);
 
+            jPanel1 = new JPanel();
+            jPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+            jPanel1.add(controlBar);
+
+            controlPanel.setLayout(new BorderLayout());
+            controlPanel.add(jPanel1, BorderLayout.WEST);
+
+            jPanel1 = new JPanel();
+            jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
+            jPanel1.add(changeSyntaxComboBox);
+
+            controlPanel.add(jPanel1, BorderLayout.EAST);
         }
     }
 
@@ -344,7 +378,11 @@ public class MainFrame extends JFrame {
         //---- File MenuItem ActionListener -----------------
         {
             if(e.getSource()==newMenuItem){
-                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意",0,null);
+                closableTabsLabel.addTab("name", getTextArea(config.getTextAreaTheme()));
+            }
+
+            if(e.getSource()==addButton){
+                closableTabsLabel.addTab("name", getTextArea(config.getTextAreaTheme()));
             }
 
             if(e.getSource()==openMenuItem){
@@ -367,6 +405,7 @@ public class MainFrame extends JFrame {
     }
 
     public JPanel TextPanel(){
+
         JPanel p = new JPanel(new BorderLayout());
 
         textArea = new RSyntaxTextArea(32, 80);
@@ -374,14 +413,29 @@ public class MainFrame extends JFrame {
         textArea.setCodeFoldingEnabled(true);
 
         RTextScrollPane sp = new RTextScrollPane(textArea);
+        Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
 
-//        fileBar = new JTabbedPane();
-//        fileBar.addTab(filename, sp);
-//        fileBar.setSelectedComponent(sp);
-        p.add(sp, BorderLayout.CENTER);
+        closableTabsLabel = new JTabbedPane();
+        closableTabsLabel.addTab("filename", sp);
+        closableTabsLabel.setSelectedComponent(sp);
 
+        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
+        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
+        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_CALLBACK,
+                (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
+                    AWTEvent e = EventQueue.getCurrentEvent();
+                    int modifiers = (e instanceof MouseEvent) ? ((MouseEvent)e).getModifiers() : 0;
+                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
+                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
+                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
+                    closableTabsLabel.remove(tabIndex);
+                } );
+
+        changeTabUI();
+
+        p.add(closableTabsLabel, BorderLayout.CENTER);
         setThemes(config.getTextAreaTheme(), textArea);
-//        textArea.setFont();
+        textArea.setFont(font);
         return p;
     }
 
@@ -395,6 +449,48 @@ public class MainFrame extends JFrame {
         }
     }
 
+    public RTextScrollPane getTextArea(String theme){
+        Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
+        JPanel p = new JPanel(new BorderLayout());
+        RSyntaxTextArea text = new RSyntaxTextArea(32, 80);
+
+        text.setSyntaxEditingStyle(null);
+        text.setCodeFoldingEnabled(true);
+
+        setThemes(theme, text);
+        text.setFont(font);
+        return new RTextScrollPane(text);
+    }
+
+    /**
+     * Set closableTabsLabel Style
+     * */
+    private void changeTabUI() {
+        closableTabsLabel.setTabLayoutPolicy( JTabbedPane.SCROLL_TAB_LAYOUT);
+
+        UIManager.put( "TabbedPane.closeArc", 999 );
+        UIManager.put( "TabbedPane.closeCrossFilledSize", 5.5f );
+        UIManager.put( "TabbedPane.closeIcon", new FlatTabbedPaneCloseIcon() );
+        closableTabsLabel.updateUI();
+        UIManager.put( "TabbedPane.closeArc", null );
+        UIManager.put( "TabbedPane.closeCrossFilledSize", null );
+        UIManager.put( "TabbedPane.closeIcon", null );
+    }
+
+//    private void initClosableTabs( JTabbedPane tabbedPane ) {
+//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
+//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
+//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSE_CALLBACK,
+//                (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
+//                    AWTEvent e = EventQueue.getCurrentEvent();
+//                    int modifiers = (e instanceof MouseEvent) ? ((MouseEvent)e).getModifiers() : 0;
+//                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
+//                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
+//                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
+//                } );
+//
+//        addDefaultTabsNoContent( tabbedPane, 3 );
+//    }
 }
 
 
