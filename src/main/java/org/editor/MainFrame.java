@@ -22,6 +22,8 @@ public class MainFrame extends JFrame {
 
     private String recentFile;
 
+    private boolean currentPageChanged;
+
     private MainFrame (){
         this(DEFAULT_CONFIG);
     }
@@ -378,11 +380,11 @@ public class MainFrame extends JFrame {
         //---- File MenuItem ActionListener -----------------
         {
             if(e.getSource()==newMenuItem){
-                closableTabsLabel.addTab("name", getTextArea(config.getTextAreaTheme()));
+                addTab("Untitled");
             }
 
             if(e.getSource()==addButton){
-                closableTabsLabel.addTab("name", getTextArea(config.getTextAreaTheme()));
+                addTab("Untitled");
             }
 
             if(e.getSource()==openMenuItem){
@@ -405,7 +407,6 @@ public class MainFrame extends JFrame {
     }
 
     public JPanel TextPanel(){
-
         JPanel p = new JPanel(new BorderLayout());
 
         textArea = new RSyntaxTextArea(32, 80);
@@ -416,7 +417,7 @@ public class MainFrame extends JFrame {
         Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
 
         closableTabsLabel = new JTabbedPane();
-        closableTabsLabel.addTab("filename", sp);
+        closableTabsLabel.addTab("Untitled", sp);
         closableTabsLabel.setSelectedComponent(sp);
 
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
@@ -425,9 +426,9 @@ public class MainFrame extends JFrame {
                 (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
                     AWTEvent e = EventQueue.getCurrentEvent();
                     int modifiers = (e instanceof MouseEvent) ? ((MouseEvent)e).getModifiers() : 0;
-                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
-                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
-                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
+//                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
+//                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
+//                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
                     closableTabsLabel.remove(tabIndex);
                 } );
 
@@ -451,15 +452,15 @@ public class MainFrame extends JFrame {
 
     public RTextScrollPane getTextArea(String theme){
         Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
-        JPanel p = new JPanel(new BorderLayout());
-        RSyntaxTextArea text = new RSyntaxTextArea(32, 80);
+//        JPanel p = new JPanel(new BorderLayout());
+        textArea = new RSyntaxTextArea(32, 80);
 
-        text.setSyntaxEditingStyle(null);
-        text.setCodeFoldingEnabled(true);
+        textArea.setSyntaxEditingStyle(null);
+        textArea.setCodeFoldingEnabled(true);
 
-        setThemes(theme, text);
-        text.setFont(font);
-        return new RTextScrollPane(text);
+        setThemes(theme, textArea);
+        textArea.setFont(font);
+        return new RTextScrollPane(textArea);
     }
 
     /**
@@ -477,20 +478,8 @@ public class MainFrame extends JFrame {
         UIManager.put( "TabbedPane.closeIcon", null );
     }
 
-//    private void initClosableTabs( JTabbedPane tabbedPane ) {
-//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
-//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
-//        tabbedPane.putClientProperty( TABBED_PANE_TAB_CLOSE_CALLBACK,
-//                (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
-//                    AWTEvent e = EventQueue.getCurrentEvent();
-//                    int modifiers = (e instanceof MouseEvent) ? ((MouseEvent)e).getModifiers() : 0;
-//                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
-//                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
-//                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
-//                } );
-//
-//        addDefaultTabsNoContent( tabbedPane, 3 );
-//    }
+    private void addTab(String TabName) {
+        closableTabsLabel.addTab(TabName, getTextArea(config.getTextAreaTheme()));
+        closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
+    }
 }
-
-
