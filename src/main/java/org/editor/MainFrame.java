@@ -2,25 +2,21 @@ package org.editor;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
-import com.formdev.flatlaf.icons.FlatTabbedPaneCloseIcon;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.Theme;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.util.function.BiConsumer;
-
-import static com.formdev.flatlaf.FlatClientProperties.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 
 public class MainFrame extends JFrame {
     private volatile static MainFrame mainFrame;
 
     private String recentFile;
+
+    BodyFrame bodyFrame;
 
     private boolean currentPageChanged;
 
@@ -47,6 +43,7 @@ public class MainFrame extends JFrame {
     }
 
     private void initFrame(Config config) {
+        bodyFrame = new BodyFrame(config.getTextAreaTheme(), config.getFontStyle(), config.getFontSize());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         windowHeight = config.getHeight();
@@ -69,21 +66,12 @@ public class MainFrame extends JFrame {
 
         setVisible(true);
 
-//        jPanel.add(new JLabel("0:0"));
         add(contentPanel, BorderLayout.NORTH);
-        add(TextPanel(), BorderLayout.CENTER);
-        add(controlPanel, BorderLayout.SOUTH);
-
-        if (recentFile == null){
-            changeSyntaxComboBox.setSelectedIndex(14);
-        }
+        add(bodyFrame.TextPanel(), BorderLayout.CENTER);
     }
 
     private static final Config DEFAULT_CONFIG = new Config();
-    JSplitPane TextAreaJSplitPane = new JSplitPane();
-    RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
-    JTabbedPane closableTabsLabel = new JTabbedPane();
-    JPanel jPanel = new JPanel();
+
     JPanel contentPanel = new JPanel();
 
     private static int windowHeight;
@@ -116,8 +104,8 @@ public class MainFrame extends JFrame {
     JMenuItem findPreviousMenuItem = new JMenuItem();
     JMenuItem replaceMenuItem = new JMenuItem();
     JMenuItem replaceNextMenuItem = new JMenuItem();
-    JMenuItem quickFindMenuItem = new JMenuItem();
-    JMenuItem quickFindAllMenuItem = new JMenuItem();
+    JMenuItem showFindSearchBarMenuItem = new JMenuItem();
+    JMenuItem showReplaceSearchBarMenuItem = new JMenuItem();
     JMenuItem useSelectForFindMenuItem = new JMenuItem();
     JMenuItem useSelectForReplaceMenuItem = new JMenuItem();
 
@@ -133,14 +121,6 @@ public class MainFrame extends JFrame {
     JButton refreshButton = new JButton();
     JButton addButton = new JButton();
     JButton sidebarButton = new JButton();
-
-    //---- controlBar -----------------------
-    JToolBar controlBar = new JToolBar();
-    JLabel jLabel = new JLabel();
-    JPanel controlPanel = new JPanel();
-    String[] listData = new String[]{"C", "C#", "C++", "CSS", "GO", "HTML","Java","Java Script", "JSON", "Lua",
-            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "Rust", "SQL", "XML", "XSL", "YAML"};
-    JComboBox<String> changeSyntaxComboBox = new JComboBox<String>(listData);
 
     //======== menuBar1 ========
     {
@@ -160,7 +140,7 @@ public class MainFrame extends JFrame {
             openMenuItem.setText("Open...");
             openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             openMenuItem.setMnemonic('O');
-            openMenuItem.addActionListener(this::actionPerformed);
+            openMenuItem.addActionListener(e -> openActionPerformed());
             fileMenu.add(openMenuItem);
 
             //---- saveAsMenuItem ----
@@ -257,7 +237,7 @@ public class MainFrame extends JFrame {
 
             //---- replaceMenuItem ----
             replaceMenuItem.setText("Replace");
-            replaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            replaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
             findMenu.add(replaceMenuItem);
 
             //---- replaceNextMenuItem ----
@@ -265,13 +245,13 @@ public class MainFrame extends JFrame {
             findMenu.add(replaceNextMenuItem);
             findMenu.addSeparator();
 
-            //---- quickFindMenuItem ----
-            quickFindMenuItem.setText("Quick Find");
-            findMenu.add(quickFindMenuItem);
+            //---- showFindSearchBarMenuItem ----
+            showFindSearchBarMenuItem.setText("Show Find Search Bar");
+            findMenu.add(showFindSearchBarMenuItem);
 
-            //---- quickFindAllMenuItem ----
-            quickFindAllMenuItem.setText("Quick Find All");
-            findMenu.add(quickFindAllMenuItem);
+            //---- showReplaceSearchBarMenuItem ----
+            showReplaceSearchBarMenuItem.setText("Show Replace Search Bar");
+            findMenu.add(showReplaceSearchBarMenuItem);
             findMenu.addSeparator();
 
             //---- useSelectForFindMenuItem ----
@@ -351,26 +331,6 @@ public class MainFrame extends JFrame {
         contentPanel.setLayout(new BorderLayout());
         contentPanel.add(toolBar, BorderLayout.WEST);
         contentPanel.add(toolBar2, BorderLayout.EAST);
-
-        //======== controlBar Button ========
-        {
-            controlBar.setMargin(new Insets(0, 0, 0, 0));
-            jLabel.setText("Line 1, Column 1");
-            controlBar.add(jLabel);
-
-            jPanel1 = new JPanel();
-            jPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-            jPanel1.add(controlBar);
-
-            controlPanel.setLayout(new BorderLayout());
-            controlPanel.add(jPanel1, BorderLayout.WEST);
-
-            jPanel1 = new JPanel();
-            jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
-            jPanel1.add(changeSyntaxComboBox);
-
-            controlPanel.add(jPanel1, BorderLayout.EAST);
-        }
     }
 
 
@@ -380,106 +340,72 @@ public class MainFrame extends JFrame {
         //---- File MenuItem ActionListener -----------------
         {
             if(e.getSource()==newMenuItem){
-                addTab("Untitled");
+                bodyFrame.addTab("Untitled");
             }
 
             if(e.getSource()==addButton){
-                addTab("Untitled");
-            }
-
-            if(e.getSource()==openMenuItem){
-                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意",0,null);
+                bodyFrame.addTab("Untitled");
             }
 
             if(e.getSource()==saveAsMenuItem){
-                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意",0,null);
+                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意", JOptionPane.ERROR_MESSAGE,null);
             }
 
             if(e.getSource()==closeMenuItem){
-                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意",0,null);
+                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意", JOptionPane.ERROR_MESSAGE,null);
             }
 
             if(e.getSource()==exitMenuItem){
-                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意",0,null);
+                JOptionPane.showMessageDialog(null,"非内部类事件监听","注意", JOptionPane.ERROR_MESSAGE,null);
             }
         }
 
     }
 
-    public JPanel TextPanel(){
-        JPanel p = new JPanel(new BorderLayout());
-
-        textArea = new RSyntaxTextArea(32, 80);
-        textArea.setSyntaxEditingStyle(null);
-        textArea.setCodeFoldingEnabled(true);
-
-        RTextScrollPane sp = new RTextScrollPane(textArea);
-        Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
-
-        closableTabsLabel = new JTabbedPane();
-        closableTabsLabel.addTab("Untitled", sp);
-        closableTabsLabel.setSelectedComponent(sp);
-
-        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
-        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
-        closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_CALLBACK,
-                (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
-                    AWTEvent e = EventQueue.getCurrentEvent();
-                    int modifiers = (e instanceof MouseEvent) ? ((MouseEvent)e).getModifiers() : 0;
-//                    JOptionPane.showMessageDialog( this, "Closed tab '" + tabPane.getTitleAt( tabIndex ) + "'."
-//                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
-//                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
-                    closableTabsLabel.remove(tabIndex);
-                } );
-
-        changeTabUI();
-
-        p.add(closableTabsLabel, BorderLayout.CENTER);
-        setThemes(config.getTextAreaTheme(), textArea);
-        textArea.setFont(font);
-        return p;
+    private void openActionPerformed() {
+//        JFileChooser chooser = new JFileChooser();
+//        chooser.showOpenDialog( this );
+        openFile();
     }
 
-    public void setThemes(String theme, RSyntaxTextArea text) {
-        Theme themes;
+    //==== open file ========
+    private void openFile() {
+        JFileChooser chooser = new JFileChooser();
+//        chooser.showOpenDialog( this );
+        JTextArea ta = new JTextArea();
         try {
-            themes = Theme.load(getClass().getResourceAsStream("/themes/"+theme+".xml"));
-            themes.apply(text);
-        } catch (IOException e) {
+            int result = chooser.showOpenDialog(this);
+            if (result == JFileChooser.CANCEL_OPTION)
+                return;
+            if (result == JFileChooser.APPROVE_OPTION) {
+                String filename;
+
+                File file = chooser.getSelectedFile();
+                recentFile = file.getAbsolutePath();
+                filename = file.getName();
+                filename = filename.substring(0,filename.lastIndexOf("."));
+                FileReader reader;
+                BufferedReader in;
+                try{
+                    reader=new FileReader(file);
+                    in=new BufferedReader(reader);
+                    String info=in.readLine();
+                    while(info!=null){
+                        ta.append(info+"\n");
+                        info=in.readLine();
+                    }
+                    in.close();
+                    reader.close();
+
+                    bodyFrame.addTab(filename, recentFile, ta);
+                }
+                catch(Exception ex){
+                    ex.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    public RTextScrollPane getTextArea(String theme){
-        Font font=new Font(config.getFontStyle() ,Font.PLAIN, config.getFontSize());
-//        JPanel p = new JPanel(new BorderLayout());
-        textArea = new RSyntaxTextArea(32, 80);
-
-        textArea.setSyntaxEditingStyle(null);
-        textArea.setCodeFoldingEnabled(true);
-
-        setThemes(theme, textArea);
-        textArea.setFont(font);
-        return new RTextScrollPane(textArea);
-    }
-
-    /**
-     * Set closableTabsLabel Style
-     * */
-    private void changeTabUI() {
-        closableTabsLabel.setTabLayoutPolicy( JTabbedPane.SCROLL_TAB_LAYOUT);
-
-        UIManager.put( "TabbedPane.closeArc", 999 );
-        UIManager.put( "TabbedPane.closeCrossFilledSize", 5.5f );
-        UIManager.put( "TabbedPane.closeIcon", new FlatTabbedPaneCloseIcon() );
-        closableTabsLabel.updateUI();
-        UIManager.put( "TabbedPane.closeArc", null );
-        UIManager.put( "TabbedPane.closeCrossFilledSize", null );
-        UIManager.put( "TabbedPane.closeIcon", null );
-    }
-
-    private void addTab(String TabName) {
-        closableTabsLabel.addTab(TabName, getTextArea(config.getTextAreaTheme()));
-        closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
 }

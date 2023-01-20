@@ -1,7 +1,10 @@
 package org.editor;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.icons.FlatTabbedPaneCloseIcon;
+import org.fife.ui.autocomplete.CompletionProvider;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -9,22 +12,32 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static com.formdev.flatlaf.FlatClientProperties.*;
 
 public class BodyFrame extends JPanel{
-    RSyntaxTextArea textArea = new RSyntaxTextArea(32, 80);
+    RSyntaxTextArea textArea;
+    Map<Integer, Tab> tabs = new HashMap<>();
+
     JSplitPane TextAreaJSplitPane = new JSplitPane();
     JTabbedPane closableTabsLabel = new JTabbedPane();
+
+    String iconPath = "images/fileicon/";
 
     //==== controlBar ================
     JToolBar controlBar = new JToolBar();
     JLabel jLabel = new JLabel();
     JPanel controlPanel = new JPanel();
-    String[] listData = new String[]{"C", "C#", "C++", "CSS", "GO", "HTML","Java","Java Script", "JSON", "Lua",
-            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "Rust", "SQL", "XML", "XSL", "YAML"};
+    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS", "CSV", "GO", "HTML","Java","Java Script", "JSON", "Lua","Latex",
+            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "SQL", "Windows Batch", "XML", "XSL", "YAML"};
+    Map<String, String> fileIcons = new HashMap<>();
     JComboBox<String> changeSyntaxComboBox = new JComboBox<>(listData);
+
+    String fileType;
 
     //==== Yaml data ================
     private final String theme;
@@ -39,37 +52,55 @@ public class BodyFrame extends JPanel{
         setLayout(new BorderLayout());
     }
 
-    //==== controlBar ================
     {
-        controlBar.setMargin(new Insets(0, 0, 0, 0));
-        jLabel.setText("Line 1, Column 1");
-        controlBar.add(jLabel);
 
-        JPanel jPanel1 = new JPanel();
-        jPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-        jPanel1.add(controlBar);
+        //==== controlBar ================
+        {
+//            controlBar.setMargin(new Insets(0, 0, 0, 0));
+//            jLabel.setText("Line 1, Column 1");
+//            controlBar.add(jLabel);
+//
+//            JPanel jPanel1 = new JPanel();
+//            jPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+//            jPanel1.add(controlBar);
+//
+//            controlPanel.setLayout(new BorderLayout());
+//            controlPanel.add(jPanel1, BorderLayout.WEST);
+//
+//            jPanel1 = new JPanel();
+//            jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
+//            jPanel1.add(changeSyntaxComboBox);
+//
+//            controlPanel.add(jPanel1, BorderLayout.EAST);
+        }
 
-        controlPanel.setLayout(new BorderLayout());
-        controlPanel.add(jPanel1, BorderLayout.WEST);
-
-        jPanel1 = new JPanel();
-        jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        jPanel1.add(changeSyntaxComboBox);
-
-        controlPanel.add(jPanel1, BorderLayout.EAST);
+        //==== file icons =======================
+        {
+            fileIcons.put("css", iconPath+"css.svg");
+            fileIcons.put("java", iconPath+"java.svg");
+            fileIcons.put("svg", iconPath+"svg.svg");
+            fileIcons.put("yml", iconPath+"yml.svg");
+            fileIcons.put("yaml", iconPath+"yml.svg");
+        }
     }
 
     public JPanel TextPanel(){
+//        init();
         JPanel p = new JPanel(new BorderLayout());
 
-        RTextScrollPane sp = new RTextScrollPane(getTextArea());
-
-        closableTabsLabel = new JTabbedPane();
-        closableTabsLabel.addTab("Untitled", sp);
-        closableTabsLabel.setSelectedComponent(sp);
+//        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
+////        textArea.setSyntaxEditingStyle(null);
+////        textArea.setCodeFoldingEnabled(true);
+//
+////        RTextScrollPane sp = new RTextScrollPane(textArea);
+//
+////        closableTabsLabel = new JTabbedPane();
+////        closableTabsLabel.addTab("Untitled", sp);
+////        closableTabsLabel.setSelectedComponent(sp);
 
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
+        closableTabsLabel.putClientProperty( TABBED_PANE_SHOW_TAB_SEPARATORS, true );
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_CALLBACK,
                 (BiConsumer<JTabbedPane, Integer>) (tabPane, tabIndex) -> {
                     AWTEvent e = EventQueue.getCurrentEvent();
@@ -82,8 +113,13 @@ public class BodyFrame extends JPanel{
 
         changeTabUI();
 
-        p.add(sp, BorderLayout.CENTER);
-        p.add(controlBar, BorderLayout.SOUTH);
+        p.add(closableTabsLabel, BorderLayout.CENTER);
+//        p.add(controlPanel, BorderLayout.SOUTH);
+
+//        changeSyntaxComboBox.setSelectedIndex(14);
+
+//        setThemes(theme, textArea);
+//        textArea.setFont(font);
         return p;
     }
 
@@ -112,29 +148,116 @@ public class BodyFrame extends JPanel{
         UIManager.put( "TabbedPane.closeIcon", null );
     }
 
-    private void addTab(String TabName) {
-        closableTabsLabel.addTab(TabName, getTextArea());
+    public void addTab(String TabName) {
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( iconPath + "file_txt.svg" ), getTextArea());
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
 
-    public RTextScrollPane getTextArea(){
-        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
-        textArea = new RSyntaxTextArea(32, 80);
+    public void addTab(String TabName, String filepath, JTextArea ta) {
+        String fileType = getFiletype(filepath);
+        String icon = "";
 
-        textArea.setSyntaxEditingStyle(null);
-        textArea.setCodeFoldingEnabled(true);
+        if (Objects.equals(fileType, "txt")){
+            icon = iconPath + "file_txt.svg";
+        }else{
 
-        setThemes(theme, textArea);
-        textArea.setFont(font);
-
-        RTextScrollPane rTextScrollPane = new RTextScrollPane();
-        rTextScrollPane.setLayout(new BorderLayout());
-        rTextScrollPane.add(textArea, BorderLayout.CENTER);
-        rTextScrollPane.add(controlBar, BorderLayout.SOUTH);
-
-        textArea.setFont(font);
-        return rTextScrollPane;
+        }
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), getTextArea(ta, getFiletype(fileType)));
+        closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
 
 
+    public JPanel getTextArea(){
+        init();
+
+        ControlPanel controlPanel1 = new ControlPanel();
+
+        RSyntaxTextArea rsta = new RSyntaxTextArea(32, 80);
+
+        rsta.addCaretListener(e -> {
+            try {
+                int pos = rsta.getCaretPosition();
+                int lineOfC = rsta.getLineOfOffset(pos) + 1;
+                int col = pos - rsta.getLineStartOffset(lineOfC - 1) + 1;
+
+                controlPanel1.setLabelText( lineOfC, col);
+                System.out.println("Line: " + lineOfC + ", Column: " + col);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
+        rsta.setSyntaxEditingStyle(null);
+        rsta.setCodeFoldingEnabled(true);
+        setThemes(theme, rsta);
+        rsta.setFont(font);
+
+        JPanel p = new JPanel(new BorderLayout());
+        p.add(new RTextScrollPane(rsta), BorderLayout.CENTER);
+        p.add(controlPanel1, BorderLayout.SOUTH);
+
+        return p;
+    }
+
+    public JPanel getTextArea(JTextArea ta, String Filetype){
+        init();
+
+        ControlPanel controlPanel1 = new ControlPanel();
+        RSyntaxTextArea rsta = new RSyntaxTextArea(32, 80);
+
+        rsta.addCaretListener(e -> {
+            try {
+                int pos = rsta.getCaretPosition();
+                int lineOfC = rsta.getLineOfOffset(pos) + 1;
+                int col = pos - rsta.getLineStartOffset(lineOfC - 1) + 1;
+
+                controlPanel1.setLabelText( lineOfC, col);
+                System.out.println("Line: " + lineOfC + ", Column: " + col);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
+        rsta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
+        rsta.setCodeFoldingEnabled(true);
+        rsta.setMarkOccurrences(true);
+        setThemes(theme, rsta);
+        rsta.setFont(font);
+
+        rsta.setText(ta.getText());
+        JPanel p = new JPanel(new BorderLayout());
+        p.add(new RTextScrollPane(rsta), BorderLayout.CENTER);
+        p.add(controlPanel1, BorderLayout.SOUTH);
+
+        return p;
+    }
+
+    public void init() {
+        textArea = new RSyntaxTextArea(32, 80);
+
+//        textArea.addCaretListener(e -> {
+//            try {
+//                int pos = textArea.getCaretPosition();
+//                int lineOfC = textArea.getLineOfOffset(pos) + 1;
+//                int col = pos - textArea.getLineStartOffset(lineOfC - 1) + 1;
+//
+//                jLabel.setText("Line: " + lineOfC + ", Column: " + col);
+//                System.out.println("Line: " + lineOfC + ", Column: " + col);
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        });
+    }
+
+    public String getFiletype(String filepath) {
+        String fileName = filepath.substring(filepath.lastIndexOf("\\")+1);
+
+        return fileName.substring(fileName.lastIndexOf(".")+1);
+    }
+
+    public void setSyntaxEditingStyle(String fileType) {
+
+    }
 }
