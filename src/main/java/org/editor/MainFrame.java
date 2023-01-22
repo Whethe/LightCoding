@@ -120,7 +120,7 @@ public class MainFrame extends JFrame {
     JButton searchButton = new JButton();
     JButton refreshButton = new JButton();
     JButton addButton = new JButton();
-    JButton sidebarButton = new JButton();
+    JToggleButton sidebarButton = new JToggleButton();
 
     //======== menuBar1 ========
     {

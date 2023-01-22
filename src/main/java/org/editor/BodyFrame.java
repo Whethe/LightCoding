@@ -53,50 +53,27 @@ public class BodyFrame extends JPanel{
     }
 
     {
-
-        //==== controlBar ================
-        {
-//            controlBar.setMargin(new Insets(0, 0, 0, 0));
-//            jLabel.setText("Line 1, Column 1");
-//            controlBar.add(jLabel);
-//
-//            JPanel jPanel1 = new JPanel();
-//            jPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-//            jPanel1.add(controlBar);
-//
-//            controlPanel.setLayout(new BorderLayout());
-//            controlPanel.add(jPanel1, BorderLayout.WEST);
-//
-//            jPanel1 = new JPanel();
-//            jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
-//            jPanel1.add(changeSyntaxComboBox);
-//
-//            controlPanel.add(jPanel1, BorderLayout.EAST);
-        }
-
         //==== file icons =======================
         {
             fileIcons.put("css", iconPath+"css.svg");
-            fileIcons.put("java", iconPath+"java.svg");
+            fileIcons.put("java", iconPath+"java2.svg");
             fileIcons.put("svg", iconPath+"svg.svg");
             fileIcons.put("yml", iconPath+"yml.svg");
             fileIcons.put("yaml", iconPath+"yml.svg");
+            fileIcons.put("py", iconPath+"python.svg");
+            fileIcons.put("js", iconPath+"js.svg");
+            fileIcons.put("jpg", iconPath+"pic.svg");
+            fileIcons.put("png", iconPath+"pic.svg");
+            fileIcons.put("c", iconPath+"c.svg");
+            fileIcons.put("cpp", iconPath+"cpp.svg");
+            fileIcons.put("cs", iconPath+"cs.svg");
+            fileIcons.put("go", iconPath+"go.svg");
+            fileIcons.put("json", iconPath+"json.svg");
         }
     }
 
     public JPanel TextPanel(){
-//        init();
         JPanel p = new JPanel(new BorderLayout());
-
-//        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
-////        textArea.setSyntaxEditingStyle(null);
-////        textArea.setCodeFoldingEnabled(true);
-//
-////        RTextScrollPane sp = new RTextScrollPane(textArea);
-//
-////        closableTabsLabel = new JTabbedPane();
-////        closableTabsLabel.addTab("Untitled", sp);
-////        closableTabsLabel.setSelectedComponent(sp);
 
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
@@ -114,12 +91,6 @@ public class BodyFrame extends JPanel{
         changeTabUI();
 
         p.add(closableTabsLabel, BorderLayout.CENTER);
-//        p.add(controlPanel, BorderLayout.SOUTH);
-
-//        changeSyntaxComboBox.setSelectedIndex(14);
-
-//        setThemes(theme, textArea);
-//        textArea.setFont(font);
         return p;
     }
 
@@ -160,8 +131,9 @@ public class BodyFrame extends JPanel{
         if (Objects.equals(fileType, "txt")){
             icon = iconPath + "file_txt.svg";
         }else{
-
+            icon = fileIcons.getOrDefault(fileType, iconPath + "file_txt.svg");
         }
+
         closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), getTextArea(ta, getFiletype(fileType)));
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
@@ -236,19 +208,6 @@ public class BodyFrame extends JPanel{
 
     public void init() {
         textArea = new RSyntaxTextArea(32, 80);
-
-//        textArea.addCaretListener(e -> {
-//            try {
-//                int pos = textArea.getCaretPosition();
-//                int lineOfC = textArea.getLineOfOffset(pos) + 1;
-//                int col = pos - textArea.getLineStartOffset(lineOfC - 1) + 1;
-//
-//                jLabel.setText("Line: " + lineOfC + ", Column: " + col);
-//                System.out.println("Line: " + lineOfC + ", Column: " + col);
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        });
     }
 
     public String getFiletype(String filepath) {
