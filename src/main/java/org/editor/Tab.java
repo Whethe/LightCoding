@@ -2,13 +2,18 @@ package org.editor;
 
 import org.fife.rsta.ac.LanguageSupportFactory;
 import org.fife.ui.autocomplete.*;
+import org.fife.ui.rsyntaxtextarea.ErrorStrip;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.Gutter;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Tab extends JPanel {
     public String getTabName() {
@@ -48,41 +53,61 @@ public class Tab extends JPanel {
         this.rSyntaxTextArea.setText(textArea.getText());
     }
 
+    /***/
     public JPanel initRSyntaxTextArea(RSyntaxTextArea rSyntaxTextArea, JTextArea textArea) {
         setRSyntaxTextAreaOutlook(rSyntaxTextArea);
         setRSyntaxTextAreaContent(textArea);
+
+        this.rSyntaxTextArea.setPaintTabLines(true);
+        this.rSyntaxTextArea.setMarginLineEnabled(true);
+        this.rSyntaxTextArea.setMarginLinePosition(100);
 
         if (syntax.isEmpty() || fileExtension == null){
             this.rSyntaxTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
         }else this.rSyntaxTextArea.setSyntaxEditingStyle(syntax.getOrDefault(fileExtension,
                 SyntaxConstants.SYNTAX_STYLE_NONE));
 
-        this.rSyntaxTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 
-        LanguageSupportFactory.get().register(rSyntaxTextArea);
         this.rSyntaxTextArea.setCodeFoldingEnabled(true);
         this.rSyntaxTextArea.setMarkOccurrences(true);
 
-        rSyntaxTextArea.addCaretListener(e -> {
+        ErrorStrip errorStrip = new ErrorStrip(rSyntaxTextArea);
+        add(errorStrip, BorderLayout.LINE_END);
+        LanguageSupportFactory.get().register(rSyntaxTextArea);
+
+        this.rSyntaxTextArea.addCaretListener(e -> {
             try {
-                int pos = rSyntaxTextArea.getCaretPosition();
-                int lineOfC = rSyntaxTextArea.getLineOfOffset(pos) + 1;
-                int col = pos - rSyntaxTextArea.getLineStartOffset(lineOfC - 1) + 1;
+                int pos = this.rSyntaxTextArea.getCaretPosition();
+                int lineOfC = this.rSyntaxTextArea.getLineOfOffset(pos) + 1;
+                int col = pos - this.rSyntaxTextArea.getLineStartOffset(lineOfC - 1) + 1;
 
                 controlPanel.setLabelText( lineOfC, col);
-                System.out.println("Line: " + lineOfC + ", Column: " + col);
+//                System.out.println("Line: " + lineOfC + ", Column: " + col);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
-        controlPanel.setLabel2Text(fileExtension);
 
-        add(rSyntaxTextArea, BorderLayout.CENTER);
+        RTextScrollPane sp = new RTextScrollPane(this.rSyntaxTextArea);
+        //Enable bookmarking:
+        Gutter gutter = sp.getGutter();
+        gutter.setBookmarkingEnabled(true);
+        URL url = getClass().getResource("/images/bookmark.png");
+        assert url != null;
+        gutter.setBookmarkIcon(new ImageIcon(url));
+
+        addListener();
+        add(sp, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
+
+        controlPanel.changeSyntaxComboBox.setSelectedItem(textType.getOrDefault(fileExtension, "Plain Text"));
+
         return this;
     }
 
     static Map<String, String> syntax = new HashMap<>();
+    static Map<String, String> textType = new HashMap<>();
+    static Map<String, String> extentToSelectBox = new HashMap<>();
     String tabName;
     String filePath;
     String fileExtension;
@@ -101,38 +126,107 @@ public class Tab extends JPanel {
         this.filePath = filePath;
         this.fileExtension = fileExtension;
 
-        if (fileExtension != null) {
-            initHashMap();
-        }
+        initHashMap();
     }
 
     static void initHashMap() {
-        syntax.put("txt", SyntaxConstants.SYNTAX_STYLE_NONE);
-        syntax.put("tex", SyntaxConstants.SYNTAX_STYLE_LATEX);
-        syntax.put("html", SyntaxConstants.SYNTAX_STYLE_HTML);
-        syntax.put("css", SyntaxConstants.SYNTAX_STYLE_CSS);
-        syntax.put("csv", SyntaxConstants.SYNTAX_STYLE_CSV);
-        syntax.put("xml", SyntaxConstants.SYNTAX_STYLE_XML);
-        syntax.put("xsl", SyntaxConstants.SYNTAX_STYLE_XML);
-        syntax.put("yml", SyntaxConstants.SYNTAX_STYLE_YAML);
-        syntax.put("yaml", SyntaxConstants.SYNTAX_STYLE_YAML);
-        syntax.put("md", SyntaxConstants.SYNTAX_STYLE_MARKDOWN);
-        syntax.put("js", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
-        syntax.put("c", SyntaxConstants.SYNTAX_STYLE_C);
-        syntax.put("c++", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
-        syntax.put(".h", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
-        syntax.put("c#", SyntaxConstants.SYNTAX_STYLE_CSHARP);
-        syntax.put("java", SyntaxConstants.SYNTAX_STYLE_JAVA);
-        syntax.put("py", SyntaxConstants.SYNTAX_STYLE_PYTHON);
-        syntax.put("json", SyntaxConstants.SYNTAX_STYLE_JSON);
-        syntax.put("php", SyntaxConstants.SYNTAX_STYLE_PHP);
-        syntax.put("rb", SyntaxConstants.SYNTAX_STYLE_RUBY);
-        syntax.put("bat", SyntaxConstants.SYNTAX_STYLE_WINDOWS_BATCH);
-        syntax.put("sal", SyntaxConstants.SYNTAX_STYLE_SQL);
+        //==== syntax ==================
+        {
+            syntax.put("txt", SyntaxConstants.SYNTAX_STYLE_NONE);
+            syntax.put("tex", SyntaxConstants.SYNTAX_STYLE_LATEX);
+            syntax.put("html", SyntaxConstants.SYNTAX_STYLE_HTML);
+            syntax.put("css", SyntaxConstants.SYNTAX_STYLE_CSS);
+            syntax.put("csv", SyntaxConstants.SYNTAX_STYLE_CSV);
+            syntax.put("xml", SyntaxConstants.SYNTAX_STYLE_XML);
+            syntax.put("xsl", SyntaxConstants.SYNTAX_STYLE_XML);
+            syntax.put("yml", SyntaxConstants.SYNTAX_STYLE_YAML);
+            syntax.put("yaml", SyntaxConstants.SYNTAX_STYLE_YAML);
+            syntax.put("md", SyntaxConstants.SYNTAX_STYLE_MARKDOWN);
+            syntax.put("js", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+            syntax.put("c", SyntaxConstants.SYNTAX_STYLE_C);
+            syntax.put("cpp", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+            syntax.put("h", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+            syntax.put("c#", SyntaxConstants.SYNTAX_STYLE_CSHARP);
+            syntax.put("java", SyntaxConstants.SYNTAX_STYLE_JAVA);
+            syntax.put("py", SyntaxConstants.SYNTAX_STYLE_PYTHON);
+            syntax.put("json", SyntaxConstants.SYNTAX_STYLE_JSON);
+            syntax.put("php", SyntaxConstants.SYNTAX_STYLE_PHP);
+            syntax.put("rb", SyntaxConstants.SYNTAX_STYLE_RUBY);
+            syntax.put("bat", SyntaxConstants.SYNTAX_STYLE_WINDOWS_BATCH);
+            syntax.put("sal", SyntaxConstants.SYNTAX_STYLE_SQL);
 
-        //==== Objective-C ================
-        syntax.put(".m", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
-        syntax.put(".mm", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+            //==== Objective-C ================
+            syntax.put("m", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+            syntax.put("mm", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+        }
+
+        //==== text ==================
+        {
+            textType.put("as", "ActionScript");
+            textType.put("asm", "Assembler X86");
+            textType.put("c", "C");
+            textType.put("h", "C");
+            textType.put("cs", "C#");
+            textType.put("cpp", "C++");
+            textType.put("clj", "Clojure");
+            textType.put("css", "CSS");
+            textType.put("csv", "CSV");
+            textType.put("go", "GO");
+            textType.put("groovy", "Groovy");
+            textType.put("html", "HTML");
+            textType.put("java", "Java");
+            textType.put("js", "Java Script");
+            textType.put("json", "JSON");
+            textType.put("lua", "Lua");
+            textType.put("tex", "Latex");
+            textType.put("md", "Markdown");
+            textType.put("mm", "Objective-C");
+            textType.put("m", "Objective-C");
+            textType.put("mxml", "MXML");
+            textType.put("pl", "Perl");
+            textType.put("php", "PHP");
+            textType.put("py", "Python");
+            textType.put("txt", "Plain Text");
+            textType.put("rb", "Ruby");
+            textType.put("sql", "SQL");
+            textType.put("xml", "XML");
+            textType.put("xsl", "XSL");
+            textType.put("yml", "Yaml");
+            textType.put("yaml", "Yaml");
+        }
+        //==== text ==================
+        {
+            extentToSelectBox.put("ActionScript", SyntaxConstants.SYNTAX_STYLE_ACTIONSCRIPT);
+            extentToSelectBox.put("Assembler X86", SyntaxConstants.SYNTAX_STYLE_ASSEMBLER_X86);
+            extentToSelectBox.put("Assembler 6502", SyntaxConstants.SYNTAX_STYLE_ASSEMBLER_6502);
+            extentToSelectBox.put("C", SyntaxConstants.SYNTAX_STYLE_C);
+            extentToSelectBox.put("C#", SyntaxConstants.SYNTAX_STYLE_CSHARP);
+            extentToSelectBox.put("C++", SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+            extentToSelectBox.put("Clojure", SyntaxConstants.SYNTAX_STYLE_CLOJURE);
+            extentToSelectBox.put("CSS", SyntaxConstants.SYNTAX_STYLE_CSS);
+            extentToSelectBox.put("CSV", SyntaxConstants.SYNTAX_STYLE_CSV);
+            extentToSelectBox.put("GO", SyntaxConstants.SYNTAX_STYLE_GO);
+            extentToSelectBox.put("Groovy", SyntaxConstants.SYNTAX_STYLE_GROOVY);
+            extentToSelectBox.put("HTML", SyntaxConstants.SYNTAX_STYLE_HTML);
+            extentToSelectBox.put("Java", SyntaxConstants.SYNTAX_STYLE_JAVA);
+            extentToSelectBox.put("Java Script", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+            extentToSelectBox.put("JSON", SyntaxConstants.SYNTAX_STYLE_JSON);
+            extentToSelectBox.put("Lua", SyntaxConstants.SYNTAX_STYLE_LUA);
+            extentToSelectBox.put("Latex", SyntaxConstants.SYNTAX_STYLE_LATEX);
+            extentToSelectBox.put("Markdown", SyntaxConstants.SYNTAX_STYLE_MARKDOWN);
+            extentToSelectBox.put("Objective-C", SyntaxConstants.SYNTAX_STYLE_C);
+            extentToSelectBox.put("Makefile", SyntaxConstants.SYNTAX_STYLE_MAKEFILE);
+            extentToSelectBox.put("MXML", SyntaxConstants.SYNTAX_STYLE_MXML);
+            extentToSelectBox.put("Perl", SyntaxConstants.SYNTAX_STYLE_PERL);
+            extentToSelectBox.put("PHP", SyntaxConstants.SYNTAX_STYLE_PHP);
+            extentToSelectBox.put("Python", SyntaxConstants.SYNTAX_STYLE_PYTHON);
+            extentToSelectBox.put("Plain Text", SyntaxConstants.SYNTAX_STYLE_NONE);
+            extentToSelectBox.put("Ruby", SyntaxConstants.SYNTAX_STYLE_RUBY);
+            extentToSelectBox.put("SQL", SyntaxConstants.SYNTAX_STYLE_SQL);
+            extentToSelectBox.put("XML", SyntaxConstants.SYNTAX_STYLE_XML);
+            extentToSelectBox.put("XSL", SyntaxConstants.SYNTAX_STYLE_XML);
+            extentToSelectBox.put("Yaml", SyntaxConstants.SYNTAX_STYLE_YAML);
+        }
     }
 
     private CompletionProvider createCompletionProvider() {
@@ -165,7 +259,11 @@ public class Tab extends JPanel {
                 "System.err.println(", "System.err.println("));
 
         return provider;
-
     }
 
+    public void addListener() {
+        controlPanel.changeSyntaxComboBox.addItemListener(e -> {
+            rSyntaxTextArea.setSyntaxEditingStyle(extentToSelectBox.get((String) Objects.requireNonNull(controlPanel.changeSyntaxComboBox.getSelectedItem())));
+        });
+    }
 }

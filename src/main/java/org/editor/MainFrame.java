@@ -2,16 +2,22 @@ package org.editor;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
+import org.fife.rsta.ui.CollapsibleSectionPanel;
+import org.fife.rsta.ui.search.FindToolBar;
+import org.fife.rsta.ui.search.ReplaceToolBar;
+import org.fife.rsta.ui.search.SearchEvent;
+import org.fife.rsta.ui.search.SearchListener;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
-public class MainFrame extends JFrame {
+public class MainFrame extends JFrame implements SearchListener {
     private volatile static MainFrame mainFrame;
 
     private String recentFile;
@@ -108,6 +114,10 @@ public class MainFrame extends JFrame {
     JMenuItem showReplaceSearchBarMenuItem = new JMenuItem();
     JMenuItem useSelectForFindMenuItem = new JMenuItem();
     JMenuItem useSelectForReplaceMenuItem = new JMenuItem();
+    CollapsibleSectionPanel csp;
+    FindToolBar findToolBar;
+    ReplaceToolBar replaceToolBar;
+
 
     //---- toolbar -----------------------
     JToolBar toolBar = new JToolBar();
@@ -218,21 +228,32 @@ public class MainFrame extends JFrame {
 
         //======== findMenu ========
         {
+            int ctrl = getToolkit().getMenuShortcutKeyMask();
+            int shift = InputEvent.SHIFT_MASK;
+            csp = new CollapsibleSectionPanel();
+
+
             findMenu.setText("Find");
             findMenu.setMnemonic('F');
 
             //---- findMenuItem ----
             findMenuItem.setText("Find");
             findMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            findMenu.add(findMenuItem);
+            KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F, ctrl);
+            Action a = csp.addBottomComponent(ks, findToolBar);
+            a.putValue(Action.NAME, "Find");
+            findMenu.add(new JMenuItem(a));
 
             //---- findNextMenuItem ----
             findNextMenuItem.setText("Find Next");
-            findMenu.add(findNextMenuItem);
+            a.putValue(Action.NAME, "Find Next");
+            findMenu.add(new JMenuItem(a));
 
             //---- findPreviousMenuItem ----
             findPreviousMenuItem.setText("Find Previous");
-            findMenu.add(findPreviousMenuItem);
+            findNextMenuItem.setText("Find Previous");
+            a.putValue(Action.NAME, "Find Previous");
+            findMenu.add(new JMenuItem(a));
             findMenu.addSeparator();
 
             //---- replaceMenuItem ----
@@ -407,5 +428,15 @@ public class MainFrame extends JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public void searchEvent(SearchEvent searchEvent) {
+
+    }
+
+    @Override
+    public String getSelectedText() {
+        return null;
     }
 }

@@ -2,11 +2,8 @@ package org.editor;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.icons.FlatTabbedPaneCloseIcon;
-import org.fife.ui.autocomplete.CompletionProvider;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,22 +17,21 @@ import java.util.function.BiConsumer;
 import static com.formdev.flatlaf.FlatClientProperties.*;
 
 public class BodyFrame extends JPanel{
-    RSyntaxTextArea textArea;
     Map<Integer, Tab> tabs = new HashMap<>();
 
     JSplitPane TextAreaJSplitPane = new JSplitPane();
     JTabbedPane closableTabsLabel = new JTabbedPane();
 
     String iconPath = "images/fileicon/";
-
-    //==== controlBar ================
-    JToolBar controlBar = new JToolBar();
-    JLabel jLabel = new JLabel();
-    JPanel controlPanel = new JPanel();
-    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS", "CSV", "GO", "HTML","Java","Java Script", "JSON", "Lua","Latex",
-            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "SQL", "Windows Batch", "XML", "XSL", "YAML"};
     Map<String, String> fileIcons = new HashMap<>();
-    JComboBox<String> changeSyntaxComboBox = new JComboBox<>(listData);
+    //==== controlBar ================
+//    JToolBar controlBar = new JToolBar();
+//    JLabel jLabel = new JLabel();
+//    JPanel controlPanel = new JPanel();
+//    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS", "CSV", "GO", "HTML","Java","Java Script", "JSON", "Lua","Latex",
+//            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "SQL", "Windows Batch", "XML", "XSL", "YAML"};
+
+//    JComboBox<String> changeSyntaxComboBox = new JComboBox<>(listData);
 
     String fileType;
 
@@ -120,12 +116,14 @@ public class BodyFrame extends JPanel{
     }
 
     public void addTab(String TabName) {
-        closableTabsLabel.addTab(TabName, new FlatSVGIcon( iconPath + "file_txt.svg" ), getTextArea());
+        Tab tab = new Tab(TabName);
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( iconPath + "file_txt.svg" ), tab.initRSyntaxTextArea(OutLook(), null));
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
 
     public void addTab(String TabName, String filepath, JTextArea ta) {
         String fileType = getFiletype(filepath);
+        Tab tab = new Tab(TabName, filepath, fileType);
         String icon = "";
 
         if (Objects.equals(fileType, "txt")){
@@ -134,85 +132,22 @@ public class BodyFrame extends JPanel{
             icon = fileIcons.getOrDefault(fileType, iconPath + "file_txt.svg");
         }
 
-        closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), getTextArea(ta, getFiletype(fileType)));
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), tab.initRSyntaxTextArea(OutLook(), ta));
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
     }
 
-
-    public JPanel getTextArea(){
-        init();
-
-        ControlPanel controlPanel1 = new ControlPanel();
-
-        RSyntaxTextArea rsta = new RSyntaxTextArea(32, 80);
-
-        rsta.addCaretListener(e -> {
-            try {
-                int pos = rsta.getCaretPosition();
-                int lineOfC = rsta.getLineOfOffset(pos) + 1;
-                int col = pos - rsta.getLineStartOffset(lineOfC - 1) + 1;
-
-                controlPanel1.setLabelText( lineOfC, col);
-                System.out.println("Line: " + lineOfC + ", Column: " + col);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+    public RSyntaxTextArea OutLook() {
+        RSyntaxTextArea rs = new RSyntaxTextArea(32, 80);
 
         Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
-        rsta.setSyntaxEditingStyle(null);
-        rsta.setCodeFoldingEnabled(true);
-        setThemes(theme, rsta);
-        rsta.setFont(font);
+        setThemes(theme, rs);
+        rs.setFont(font);
 
-        JPanel p = new JPanel(new BorderLayout());
-        p.add(new RTextScrollPane(rsta), BorderLayout.CENTER);
-        p.add(controlPanel1, BorderLayout.SOUTH);
-
-        return p;
-    }
-
-    public JPanel getTextArea(JTextArea ta, String Filetype){
-        init();
-
-        ControlPanel controlPanel1 = new ControlPanel();
-        RSyntaxTextArea rsta = new RSyntaxTextArea(32, 80);
-
-        rsta.addCaretListener(e -> {
-            try {
-                int pos = rsta.getCaretPosition();
-                int lineOfC = rsta.getLineOfOffset(pos) + 1;
-                int col = pos - rsta.getLineStartOffset(lineOfC - 1) + 1;
-
-                controlPanel1.setLabelText( lineOfC, col);
-                System.out.println("Line: " + lineOfC + ", Column: " + col);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
-
-        Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
-        rsta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
-        rsta.setCodeFoldingEnabled(true);
-        rsta.setMarkOccurrences(true);
-        setThemes(theme, rsta);
-        rsta.setFont(font);
-
-        rsta.setText(ta.getText());
-        JPanel p = new JPanel(new BorderLayout());
-        p.add(new RTextScrollPane(rsta), BorderLayout.CENTER);
-        p.add(controlPanel1, BorderLayout.SOUTH);
-
-        return p;
-    }
-
-    public void init() {
-        textArea = new RSyntaxTextArea(32, 80);
+        return rs;
     }
 
     public String getFiletype(String filepath) {
         String fileName = filepath.substring(filepath.lastIndexOf("\\")+1);
-
         return fileName.substring(fileName.lastIndexOf(".")+1);
     }
 

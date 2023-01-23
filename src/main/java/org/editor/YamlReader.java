@@ -3,6 +3,7 @@ package org.editor;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,7 +24,8 @@ public class YamlReader {
     YamlReader(String filePath){
         Yaml yaml = new Yaml();
         try{
-            properties = yaml.load(readFile(filePath));
+            InputStream in = this.getClass().getClassLoader().getResourceAsStream(filePath);
+            properties = yaml.load(in);
         } catch (Exception e) {
             e.printStackTrace();
         }

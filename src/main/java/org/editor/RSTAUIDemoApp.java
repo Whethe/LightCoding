@@ -7,8 +7,9 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.text.BadLocationException;
 
+import com.sun.source.tree.Tree;
+import org.fife.rsta.ac.LanguageSupportFactory;
 import org.fife.rsta.ui.CollapsibleSectionPanel;
-//import org.fife.rsta.ui.DocumentMap;
 import org.fife.rsta.ui.GoToDialog;
 import org.fife.rsta.ui.SizeGripIcon;
 import org.fife.rsta.ui.search.FindDialog;
@@ -20,6 +21,7 @@ import org.fife.rsta.ui.search.FindToolBar;
 import org.fife.ui.rsyntaxtextarea.ErrorStrip;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
@@ -38,7 +40,7 @@ import org.fife.ui.rtextarea.SearchResult;
 public final class RSTAUIDemoApp extends JFrame implements SearchListener {
 
     private CollapsibleSectionPanel csp;
-    private RSyntaxTextArea textArea;
+    private TextEditorPane textArea;
     private FindDialog findDialog;
     private ReplaceDialog replaceDialog;
     private FindToolBar findToolBar;
@@ -57,15 +59,17 @@ public final class RSTAUIDemoApp extends JFrame implements SearchListener {
 
         setJMenuBar(createMenuBar());
 
-        textArea = new RSyntaxTextArea(25, 80);
+        textArea = new TextEditorPane();
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
         textArea.setCodeFoldingEnabled(true);
         textArea.setMarkOccurrences(true);
         RTextScrollPane sp = new RTextScrollPane(textArea);
         csp.add(sp);
 
+        LanguageSupportFactory.get().register(textArea);
         ErrorStrip errorStrip = new ErrorStrip(textArea);
         contentPane.add(errorStrip, BorderLayout.LINE_END);
+
         //org.fife.rsta.ui.DocumentMap docMap = new org.fife.rsta.ui.DocumentMap(textArea);
         //contentPane.add(docMap, BorderLayout.LINE_END);
 

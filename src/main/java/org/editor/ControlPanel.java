@@ -2,15 +2,14 @@ package org.editor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ControlPanel extends JPanel {
     JToolBar controlBar = new JToolBar();
     JLabel jLabel = new JLabel();
     JLabel jLabel2 = new JLabel();
-    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS", "CSV", "GO", "HTML","Java","Java Script", "JSON", "Lua","Latex",
-            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "Rust", "SQL", "XML", "XSL", "YAML"};
+    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS",
+            "CSV", "GO", "Groovy", "Htaccess", "HTML", "Java", "Java Script", "JSON", "Lua", "Latex", "Makefile", "Markdown",
+            "MXML", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "Ruby", "SQL", "XML", "XSL", "YAML"};
     JComboBox<String> changeSyntaxComboBox = new JComboBox<>(listData);
 
     ControlPanel() {
@@ -37,14 +36,7 @@ public class ControlPanel extends JPanel {
         add(jPanel1, BorderLayout.EAST);
     }
 
-    public void setSelectSyntax(String fileType) {
-
-    }
-
     public void setLabelText(int line, int column) {
         jLabel.setText("Line: " + line + ", Column: " + column);
-    }
-    public void setLabel2Text(String syntax) {
-        jLabel2.setText("Current: " + syntax);
     }
 }

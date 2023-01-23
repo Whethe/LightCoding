@@ -2,10 +2,8 @@ package org.editor;
 
 import com.formdev.flatlaf.*;
 import com.formdev.flatlaf.util.SystemInfo;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 
 /**
@@ -14,7 +12,7 @@ import java.io.File;
  */
 public class App 
 {
-    private final static String CONFIG_PATH = "src/main/resources/config/defaultConfig.yaml";
+    private final static String CONFIG_PATH = "config/defaultConfig.yaml";
     private final static String USERsCONFIG_PATH = "src/main/resources/config/userConfig.yaml";
     private static Config config = new Config();
 //    static Logger logger  =  Logger.getLogger(App.class);
