@@ -3,12 +3,14 @@ package org.editor;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.icons.FlatTabbedPaneCloseIcon;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.fife.ui.rsyntaxtextarea.Theme;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -17,7 +19,7 @@ import java.util.function.BiConsumer;
 import static com.formdev.flatlaf.FlatClientProperties.*;
 
 public class BodyFrame extends JPanel{
-    Map<Integer, Tab> tabs = new HashMap<>();
+    ArrayList<Tab> tabs = new ArrayList<>();
 
     JSplitPane TextAreaJSplitPane = new JSplitPane();
     JTabbedPane closableTabsLabel = new JTabbedPane();
@@ -68,9 +70,7 @@ public class BodyFrame extends JPanel{
         }
     }
 
-    public JPanel TextPanel(){
-        JPanel p = new JPanel(new BorderLayout());
-
+    public BodyFrame TextPanel(){
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
         closableTabsLabel.putClientProperty( TABBED_PANE_SHOW_TAB_SEPARATORS, true );
@@ -82,12 +82,13 @@ public class BodyFrame extends JPanel{
 //                                    + "\n\n(modifiers: " + MouseEvent.getMouseModifiersText( modifiers ) + ")",
 //                            "Tab Closed", JOptionPane.PLAIN_MESSAGE );
                     closableTabsLabel.remove(tabIndex);
+                    tabs.remove((int)tabIndex);
                 } );
 
         changeTabUI();
 
-        p.add(closableTabsLabel, BorderLayout.CENTER);
-        return p;
+        add(closableTabsLabel, BorderLayout.CENTER);
+        return this;
     }
 
     public void setThemes(String theme, RSyntaxTextArea text) {
@@ -115,10 +116,12 @@ public class BodyFrame extends JPanel{
         UIManager.put( "TabbedPane.closeIcon", null );
     }
 
-    public void addTab(String TabName) {
+    public void addTab(String TabName){
         Tab tab = new Tab(TabName);
-        closableTabsLabel.addTab(TabName, new FlatSVGIcon( iconPath + "file_txt.svg" ), tab.initRSyntaxTextArea(OutLook(), null));
+        Tab p = tab.initRSyntaxTextArea(OutLook(), null);
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( iconPath + "file_txt.svg" ), p);
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
+        tabs.add(p);
     }
 
     public void addTab(String TabName, String filepath, JTextArea ta) {
@@ -132,18 +135,21 @@ public class BodyFrame extends JPanel{
             icon = fileIcons.getOrDefault(fileType, iconPath + "file_txt.svg");
         }
 
-        closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), tab.initRSyntaxTextArea(OutLook(), ta));
+        Tab p = tab.initRSyntaxTextArea(OutLook(), ta);
+        closableTabsLabel.addTab(TabName, new FlatSVGIcon( icon ), p);
         closableTabsLabel.setSelectedIndex(closableTabsLabel.getTabCount()-1);
+
+        tabs.add(p);
     }
 
-    public RSyntaxTextArea OutLook() {
-        RSyntaxTextArea rs = new RSyntaxTextArea(32, 80);
+    public TextEditorPane OutLook() {
+        TextEditorPane tep = new TextEditorPane();
 
         Font font=new Font(fontStyle ,Font.PLAIN, fontSize);
-        setThemes(theme, rs);
-        rs.setFont(font);
+        setThemes(theme, tep);
+        tep.setFont(font);
 
-        return rs;
+        return tep;
     }
 
     public String getFiletype(String filepath) {
@@ -154,4 +160,13 @@ public class BodyFrame extends JPanel{
     public void setSyntaxEditingStyle(String fileType) {
 
     }
+
+    public void closeTabs() {
+
+    }
+    public Tab getTabsTextArea(int tabIndex) {
+        if (tabs.isEmpty()) return null;
+        return tabs.get(tabIndex);
+    }
+
 }

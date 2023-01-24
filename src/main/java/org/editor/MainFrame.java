@@ -7,21 +7,28 @@ import org.fife.rsta.ui.search.FindToolBar;
 import org.fife.rsta.ui.search.ReplaceToolBar;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.rsta.ui.search.SearchListener;
+import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import static com.formdev.flatlaf.FlatLaf.updateUI;
+
 public class MainFrame extends JFrame implements SearchListener {
     private volatile static MainFrame mainFrame;
 
     private String recentFile;
 
+    JSplitPane TextAreaJSplitPane = new JSplitPane();
     BodyFrame bodyFrame;
 
     private boolean currentPageChanged;
@@ -70,10 +77,15 @@ public class MainFrame extends JFrame implements SearchListener {
         setSize(windowWidth, windowHeight);
         setIconImages(FlatSVGUtils.createWindowIconImages( "/images/div.svg" ));
 
+        //TextAreaJSplitPane
+        TextAreaJSplitPane.setOneTouchExpandable(true);
+        TextAreaJSplitPane.setContinuousLayout(true);
+
         setVisible(true);
 
         add(contentPanel, BorderLayout.NORTH);
-        add(bodyFrame.TextPanel(), BorderLayout.CENTER);
+        bodyFrame = bodyFrame.TextPanel();
+        add(bodyFrame, BorderLayout.CENTER);
     }
 
     private static final Config DEFAULT_CONFIG = new Config();
@@ -102,6 +114,7 @@ public class MainFrame extends JFrame implements SearchListener {
     JMenuItem cutMenuItem = new JMenuItem();
     JMenuItem copyMenuItem = new JMenuItem();
     JMenuItem pasteMenuItem = new JMenuItem();
+    JMenuItem selectAllMenuItem = new JMenuItem();
     JMenuItem deleteMenuItem = new JMenuItem();
 
     JMenu findMenu = new JMenu();
@@ -187,14 +200,14 @@ public class MainFrame extends JFrame implements SearchListener {
             undoMenuItem.setText("Undo");
             undoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             undoMenuItem.setMnemonic('U');
-//            undoMenuItem.addActionListener(e -> menuItemActionPerformed(e));
+            undoMenuItem.addActionListener(this::editActionPerformedEdit);
             editMenu.add(undoMenuItem);
 
             //---- redoMenuItem ----
             redoMenuItem.setText("Redo");
             redoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             redoMenuItem.setMnemonic('R');
-//            redoMenuItem.addActionListener(e -> menuItemActionPerformed(e));
+            redoMenuItem.addActionListener(this::editActionPerformedEdit);
             editMenu.add(redoMenuItem);
             editMenu.addSeparator();
 
@@ -202,19 +215,29 @@ public class MainFrame extends JFrame implements SearchListener {
             cutMenuItem.setText("Cut");
             cutMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             cutMenuItem.setMnemonic('C');
+            cutMenuItem.addActionListener(this::editActionPerformedEdit);
             editMenu.add(cutMenuItem);
 
             //---- copyMenuItem ----
             copyMenuItem.setText("Copy");
             copyMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             copyMenuItem.setMnemonic('O');
+            copyMenuItem.addActionListener(this::editActionPerformedEdit);
             editMenu.add(copyMenuItem);
 
             //---- pasteMenuItem ----
             pasteMenuItem.setText("Paste");
             pasteMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             pasteMenuItem.setMnemonic('P');
+            pasteMenuItem.addActionListener(this::editActionPerformedEdit);
             editMenu.add(pasteMenuItem);
+
+            //---- selectAllMenuItem ----
+            selectAllMenuItem.setText("Select All");
+            selectAllMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            selectAllMenuItem.setMnemonic('S');
+            selectAllMenuItem.addActionListener(this::editActionPerformedEdit);
+            editMenu.add(selectAllMenuItem);
             editMenu.addSeparator();
 
             //---- deleteMenuItem ----
@@ -294,23 +317,28 @@ public class MainFrame extends JFrame implements SearchListener {
             toolBar.setMargin(new Insets(1, 1, 1, 1));
             //---- backButton ----
             backButton.setToolTipText("Undo");
+            backButton.addActionListener(this::editActionPerformedEdit);
             toolBar.add(backButton);
 
             //---- forwardButton ----
             forwardButton.setToolTipText("Redo");
+            forwardButton.addActionListener(this::editActionPerformedEdit);
             toolBar.add(forwardButton);
             toolBar.addSeparator();
 
             //---- cutButton ----
             cutButton.setToolTipText("Cut");
+            cutButton.addActionListener(this::editActionPerformedEdit);
             toolBar.add(cutButton);
 
             //---- copyButton ----
             copyButton.setToolTipText("Copy");
+            copyButton.addActionListener(this::editActionPerformedEdit);
             toolBar.add(copyButton);
 
             //---- pasteButton ----
             pasteButton.setToolTipText("Paste");
+            pasteButton.addActionListener(this::editActionPerformedEdit);
             toolBar.add(pasteButton);
             toolBar.addSeparator();
 
@@ -330,6 +358,23 @@ public class MainFrame extends JFrame implements SearchListener {
 
             //---- sidebarButton ----
             sidebarButton.setToolTipText("Sidebar");
+            sidebarButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JToggleButton toggleBtn = (JToggleButton) e.getSource();
+                    if (toggleBtn.isSelected()){
+                        remove(bodyFrame);
+                        TextAreaJSplitPane.setRightComponent(bodyFrame);
+                        add(TextAreaJSplitPane, BorderLayout.CENTER);
+                        updateUI();
+                        repaint();
+                    }else{
+                        remove(TextAreaJSplitPane);
+                        add(bodyFrame, BorderLayout.CENTER);
+                        repaint();
+                    }
+                }
+            });
             toolBar2.add(sidebarButton);
 
             backButton.setIcon( new FlatSVGIcon( "images/undo.svg" ) );
@@ -356,7 +401,7 @@ public class MainFrame extends JFrame implements SearchListener {
 
 
     //---- ActionListener -----------------
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e){
 
         //---- File MenuItem ActionListener -----------------
         {
@@ -381,6 +426,55 @@ public class MainFrame extends JFrame implements SearchListener {
             }
         }
 
+    }
+
+    public void editActionPerformedEdit(ActionEvent e){
+
+        //---- File MenuItem ActionListener -----------------
+        {
+            int index = this.bodyFrame.closableTabsLabel.getSelectedIndex();
+            Tab tab = this.bodyFrame.getTabsTextArea(index);
+
+            if (tab != null){
+                // ==== editMenu =============
+                if(e.getSource()==undoMenuItem){
+                    tab.Undo();
+                }
+                if(e.getSource()==redoMenuItem){
+                    tab.Redo();
+                }
+                if(e.getSource()==cutMenuItem){
+                    tab.Cut();
+                }
+                if(e.getSource()==copyMenuItem){
+                    tab.Copy();
+                }
+                if(e.getSource()==pasteMenuItem){
+                    tab.Paste();
+                }
+                if(e.getSource()==selectAllMenuItem){
+                    tab.SelectAll();
+                }
+
+                // ==== toolbar =============
+                if(e.getSource()==backButton){
+                    tab.Undo();
+                }
+                if(e.getSource()==forwardButton){
+                    tab.Redo();
+                }
+                if(e.getSource()==cutButton){
+                    tab.Cut();
+                }
+                if(e.getSource()==copyButton){
+                    tab.Copy();
+                }
+                if(e.getSource()==pasteButton){
+                    tab.Paste();
+                }
+            }
+
+        }
     }
 
     private void openActionPerformed() {
@@ -438,5 +532,11 @@ public class MainFrame extends JFrame implements SearchListener {
     @Override
     public String getSelectedText() {
         return null;
+    }
+
+    private static JMenuItem createMenuItem(Action action, String tip) {
+        JMenuItem item = new JMenuItem(action);
+        item.setToolTipText(tip); // Swing annoyingly adds tool tip text to the menu item
+        return item;
     }
 }

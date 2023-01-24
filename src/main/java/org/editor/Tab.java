@@ -2,14 +2,14 @@ package org.editor;
 
 import org.fife.rsta.ac.LanguageSupportFactory;
 import org.fife.ui.autocomplete.*;
-import org.fife.ui.rsyntaxtextarea.ErrorStrip;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.RTextScrollPane;
-
+import org.fife.rsta.ui.*;
 import javax.swing.*;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
+
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,18 +44,20 @@ public class Tab extends JPanel {
         return rSyntaxTextArea;
     }
 
-    public void setRSyntaxTextAreaOutlook(RSyntaxTextArea rSyntaxTextArea){
+    public void setRSyntaxTextAreaOutlook(TextEditorPane rSyntaxTextArea){
         this.rSyntaxTextArea = rSyntaxTextArea;
     }
 
-    public void setRSyntaxTextAreaContent(JTextArea textArea) {
+    public void setRSyntaxTextAreaContent(JTextArea textArea){
         if (textArea == null) return;
         this.rSyntaxTextArea.setText(textArea.getText());
     }
 
     /***/
-    public JPanel initRSyntaxTextArea(RSyntaxTextArea rSyntaxTextArea, JTextArea textArea) {
+    public Tab initRSyntaxTextArea(TextEditorPane rSyntaxTextArea, JTextArea textArea){
         setRSyntaxTextAreaOutlook(rSyntaxTextArea);
+//        setRSyntaxTextAreaContent(textArea);
+        this.rSyntaxTextArea.setEncoding("UTF-8");
         setRSyntaxTextAreaContent(textArea);
 
         this.rSyntaxTextArea.setPaintTabLines(true);
@@ -66,7 +68,6 @@ public class Tab extends JPanel {
             this.rSyntaxTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
         }else this.rSyntaxTextArea.setSyntaxEditingStyle(syntax.getOrDefault(fileExtension,
                 SyntaxConstants.SYNTAX_STYLE_NONE));
-
 
         this.rSyntaxTextArea.setCodeFoldingEnabled(true);
         this.rSyntaxTextArea.setMarkOccurrences(true);
@@ -82,14 +83,14 @@ public class Tab extends JPanel {
                 int col = pos - this.rSyntaxTextArea.getLineStartOffset(lineOfC - 1) + 1;
 
                 controlPanel.setLabelText( lineOfC, col);
-//                System.out.println("Line: " + lineOfC + ", Column: " + col);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
+        this.rSyntaxTextArea.getDocument().addUndoableEditListener(und);
 
         RTextScrollPane sp = new RTextScrollPane(this.rSyntaxTextArea);
-        //Enable bookmarking:
+        //Enable bookmarking
         Gutter gutter = sp.getGutter();
         gutter.setBookmarkingEnabled(true);
         URL url = getClass().getResource("/images/bookmark.png");
@@ -101,7 +102,6 @@ public class Tab extends JPanel {
         add(controlPanel, BorderLayout.SOUTH);
 
         controlPanel.changeSyntaxComboBox.setSelectedItem(textType.getOrDefault(fileExtension, "Plain Text"));
-
         return this;
     }
 
@@ -111,8 +111,9 @@ public class Tab extends JPanel {
     String tabName;
     String filePath;
     String fileExtension;
-    RSyntaxTextArea rSyntaxTextArea = new RSyntaxTextArea(32, 80);
-
+    private UndoManager und;
+//    RSyntaxTextArea rSyntaxTextArea = new RSyntaxTextArea(32, 80);
+    TextEditorPane rSyntaxTextArea = new TextEditorPane();
     ControlPanel controlPanel = new ControlPanel();
 
     Tab (String tabName) {
@@ -121,10 +122,16 @@ public class Tab extends JPanel {
 
     Tab(String tabName, String filePath, String fileExtension) {
         setLayout(new BorderLayout());
+        und = new UndoManager();
 
         this.tabName = tabName;
         this.filePath = filePath;
-        this.fileExtension = fileExtension;
+        if (fileExtension != null){
+            this.fileExtension = fileExtension.toLowerCase();
+        }else{
+            this.fileExtension = null;
+        }
+
 
         initHashMap();
     }
@@ -265,5 +272,28 @@ public class Tab extends JPanel {
         controlPanel.changeSyntaxComboBox.addItemListener(e -> {
             rSyntaxTextArea.setSyntaxEditingStyle(extentToSelectBox.get((String) Objects.requireNonNull(controlPanel.changeSyntaxComboBox.getSelectedItem())));
         });
+    }
+
+    public void Undo() {
+        if (und.canUndo()) und.undo();
+    }
+    public void Redo() {
+        if (und.canRedo()) und.redo();
+    }
+
+    public void Cut() {
+        rSyntaxTextArea.cut();
+    }
+
+    public void Copy() {
+        rSyntaxTextArea.copy();
+    }
+
+    public void SelectAll() {
+        rSyntaxTextArea.selectAll();
+    }
+
+    public void Paste() {
+        rSyntaxTextArea.paste();
     }
 }
