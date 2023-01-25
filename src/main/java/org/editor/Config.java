@@ -1,6 +1,12 @@
 package org.editor;
 
-import com.formdev.flatlaf.*;
+/**
+ * Load data into Config.Class
+ * WINDOWS_SIZE, FONTS, etc...
+ *
+ * @author Haosen
+ * @version 1.0
+ */
 
 public class Config {
 

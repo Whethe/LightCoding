@@ -29,10 +29,10 @@ public class ControlPanel extends JPanel {
         jLabel2.setText("Current: ");
 
         jPanel1 = new JPanel(new BorderLayout());
-//        jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
-
-        jPanel1.add(changeSyntaxComboBox, BorderLayout.EAST);
+        jPanel1.setLayout(new FlowLayout(FlowLayout.RIGHT));
         jPanel1.add(jLabel2, BorderLayout.WEST);
+        jPanel1.add(changeSyntaxComboBox, BorderLayout.EAST);
+
         add(jPanel1, BorderLayout.EAST);
     }
 

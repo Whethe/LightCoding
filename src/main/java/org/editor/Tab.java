@@ -5,7 +5,6 @@ import org.fife.ui.autocomplete.*;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.RTextScrollPane;
-import org.fife.rsta.ui.*;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
@@ -57,8 +56,9 @@ public class Tab extends JPanel {
     public Tab initRSyntaxTextArea(TextEditorPane rSyntaxTextArea, JTextArea textArea){
         setRSyntaxTextAreaOutlook(rSyntaxTextArea);
 //        setRSyntaxTextAreaContent(textArea);
-        this.rSyntaxTextArea.setEncoding("UTF-8");
+
         setRSyntaxTextAreaContent(textArea);
+        this.rSyntaxTextArea.setEncoding("utf-8");
 
         this.rSyntaxTextArea.setPaintTabLines(true);
         this.rSyntaxTextArea.setMarginLineEnabled(true);
@@ -72,9 +72,9 @@ public class Tab extends JPanel {
         this.rSyntaxTextArea.setCodeFoldingEnabled(true);
         this.rSyntaxTextArea.setMarkOccurrences(true);
 
-        ErrorStrip errorStrip = new ErrorStrip(rSyntaxTextArea);
+        ErrorStrip errorStrip = new ErrorStrip(this.rSyntaxTextArea);
         add(errorStrip, BorderLayout.LINE_END);
-        LanguageSupportFactory.get().register(rSyntaxTextArea);
+        LanguageSupportFactory.get().register(this.rSyntaxTextArea);
 
         this.rSyntaxTextArea.addCaretListener(e -> {
             try {
@@ -112,7 +112,7 @@ public class Tab extends JPanel {
     String filePath;
     String fileExtension;
     private UndoManager und;
-//    RSyntaxTextArea rSyntaxTextArea = new RSyntaxTextArea(32, 80);
+
     TextEditorPane rSyntaxTextArea = new TextEditorPane();
     ControlPanel controlPanel = new ControlPanel();
 
@@ -296,4 +296,6 @@ public class Tab extends JPanel {
     public void Paste() {
         rSyntaxTextArea.paste();
     }
+
+
 }

@@ -1,10 +1,10 @@
 Window:
-  theme: Dark
+  theme: Darcula
   color: DARK_GRAY
   height: 600
   width: 1200
 
 Body:
   fontSize: 18
-  fontStyle: Times New Roman
+  fontStyle: 仿宋
   theme: monokai

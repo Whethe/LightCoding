@@ -18,7 +18,7 @@ import java.util.function.BiConsumer;
 
 import static com.formdev.flatlaf.FlatClientProperties.*;
 
-public class BodyFrame extends JPanel{
+public class BodyPanel extends JPanel{
     ArrayList<Tab> tabs = new ArrayList<>();
 
     JSplitPane TextAreaJSplitPane = new JSplitPane();
@@ -26,14 +26,6 @@ public class BodyFrame extends JPanel{
 
     String iconPath = "images/fileicon/";
     Map<String, String> fileIcons = new HashMap<>();
-    //==== controlBar ================
-//    JToolBar controlBar = new JToolBar();
-//    JLabel jLabel = new JLabel();
-//    JPanel controlPanel = new JPanel();
-//    String[] listData = new String[]{"ActionScript", "Assembler X86", "Assembler 6502", "C", "Clojure","C++", "C#", "CSS", "CSV", "GO", "HTML","Java","Java Script", "JSON", "Lua","Latex",
-//            "Markdown", "Objective-C", "Perl", "PHP", "Plain Text", "Python", "R", "Ruby", "SQL", "Windows Batch", "XML", "XSL", "YAML"};
-
-//    JComboBox<String> changeSyntaxComboBox = new JComboBox<>(listData);
 
     String fileType;
 
@@ -42,7 +34,7 @@ public class BodyFrame extends JPanel{
     private final String fontStyle;
     private final int fontSize;
 
-    BodyFrame(String theme, String fontStyle, int fontSize) {
+    BodyPanel(String theme, String fontStyle, int fontSize) {
         this.theme = theme;
         this.fontStyle = fontStyle;
         this.fontSize = fontSize;
@@ -70,7 +62,7 @@ public class BodyFrame extends JPanel{
         }
     }
 
-    public BodyFrame TextPanel(){
+    public BodyPanel TextPanel(){
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSABLE, true );
         closableTabsLabel.putClientProperty( TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close" );
         closableTabsLabel.putClientProperty( TABBED_PANE_SHOW_TAB_SEPARATORS, true );

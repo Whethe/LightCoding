@@ -7,11 +7,8 @@ import org.fife.rsta.ui.search.FindToolBar;
 import org.fife.rsta.ui.search.ReplaceToolBar;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.rsta.ui.search.SearchListener;
-import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,7 +26,9 @@ public class MainFrame extends JFrame implements SearchListener {
     private String recentFile;
 
     JSplitPane TextAreaJSplitPane = new JSplitPane();
-    BodyFrame bodyFrame;
+    BodyPanel bodyPanel;
+    String workSpacePath = "";
+    WorkSpacePanel workSpacePanel = new WorkSpacePanel();
 
     private boolean currentPageChanged;
 
@@ -56,7 +55,7 @@ public class MainFrame extends JFrame implements SearchListener {
     }
 
     private void initFrame(Config config) {
-        bodyFrame = new BodyFrame(config.getTextAreaTheme(), config.getFontStyle(), config.getFontSize());
+        bodyPanel = new BodyPanel(config.getTextAreaTheme(), config.getFontStyle(), config.getFontSize());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         windowHeight = config.getHeight();
@@ -84,8 +83,8 @@ public class MainFrame extends JFrame implements SearchListener {
         setVisible(true);
 
         add(contentPanel, BorderLayout.NORTH);
-        bodyFrame = bodyFrame.TextPanel();
-        add(bodyFrame, BorderLayout.CENTER);
+        bodyPanel = bodyPanel.TextPanel();
+        add(bodyPanel, BorderLayout.CENTER);
     }
 
     private static final Config DEFAULT_CONFIG = new Config();
@@ -104,6 +103,7 @@ public class MainFrame extends JFrame implements SearchListener {
     JMenu fileMenu = new JMenu();
     JMenuItem newMenuItem = new JMenuItem();
     JMenuItem openMenuItem = new JMenuItem();
+    JMenuItem openFolderMenuItem = new JMenuItem();
     JMenuItem saveAsMenuItem = new JMenuItem();
     JMenuItem closeMenuItem = new JMenuItem();
     JMenuItem exitMenuItem = new JMenuItem();
@@ -158,6 +158,11 @@ public class MainFrame extends JFrame implements SearchListener {
             newMenuItem.setMnemonic('N');
             newMenuItem.addActionListener(this::actionPerformed);
             fileMenu.add(newMenuItem);
+
+            //---- openFolder ----
+            openFolderMenuItem.setText("Open Folder");
+            openFolderMenuItem.addActionListener(this::actionPerformed);
+            fileMenu.add(openFolderMenuItem);
 
             //---- openMenuItem ----
             openMenuItem.setText("Open...");
@@ -363,14 +368,15 @@ public class MainFrame extends JFrame implements SearchListener {
                 public void actionPerformed(ActionEvent e) {
                     JToggleButton toggleBtn = (JToggleButton) e.getSource();
                     if (toggleBtn.isSelected()){
-                        remove(bodyFrame);
-                        TextAreaJSplitPane.setRightComponent(bodyFrame);
+                        remove(bodyPanel);
+                        TextAreaJSplitPane.setLeftComponent(workSpacePanel);
+                        TextAreaJSplitPane.setRightComponent(bodyPanel);
                         add(TextAreaJSplitPane, BorderLayout.CENTER);
                         updateUI();
                         repaint();
                     }else{
                         remove(TextAreaJSplitPane);
-                        add(bodyFrame, BorderLayout.CENTER);
+                        add(bodyPanel, BorderLayout.CENTER);
                         repaint();
                     }
                 }
@@ -406,11 +412,28 @@ public class MainFrame extends JFrame implements SearchListener {
         //---- File MenuItem ActionListener -----------------
         {
             if(e.getSource()==newMenuItem){
-                bodyFrame.addTab("Untitled");
+                bodyPanel.addTab("Untitled");
             }
 
             if(e.getSource()==addButton){
-                bodyFrame.addTab("Untitled");
+                bodyPanel.addTab("Untitled");
+            }
+
+            if(e.getSource()==openFolderMenuItem){
+                try {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                    int n = fileChooser.showOpenDialog(this.getContentPane());
+                    if (n == JFileChooser.APPROVE_OPTION)
+                    {
+                        workSpacePath = fileChooser.getSelectedFile().getPath();
+                        System.out.println("here is directories" + workSpacePath);
+                        workSpacePanel.initJTree(workSpacePath);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
 
             if(e.getSource()==saveAsMenuItem){
@@ -432,8 +455,8 @@ public class MainFrame extends JFrame implements SearchListener {
 
         //---- File MenuItem ActionListener -----------------
         {
-            int index = this.bodyFrame.closableTabsLabel.getSelectedIndex();
-            Tab tab = this.bodyFrame.getTabsTextArea(index);
+            int index = this.bodyPanel.closableTabsLabel.getSelectedIndex();
+            Tab tab = this.bodyPanel.getTabsTextArea(index);
 
             if (tab != null){
                 // ==== editMenu =============
@@ -512,7 +535,7 @@ public class MainFrame extends JFrame implements SearchListener {
                     in.close();
                     reader.close();
 
-                    bodyFrame.addTab(filename, recentFile, ta);
+                    bodyPanel.addTab(filename, recentFile, ta);
                 }
                 catch(Exception ex){
                     ex.printStackTrace();

@@ -1,22 +1,26 @@
 package org.editor;
 
+import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
+/**
+ * Read in config.yaml and load it into Config.Class
+ *
+ * @author Haosen
+ * @version 1.0
+ */
 
 public class YamlReader {
     private static HashMap<String, Map<String, Object>> properties;
 
-    private static Config config;
+    private static final Config config;
 
     //----init------------------------------
-    {
+    static {
         properties = new HashMap<>();
         config = new Config();
     }
@@ -46,14 +50,19 @@ public class YamlReader {
         }
     }
 
+    public static Config getConfig() {
+        return config;
+    }
+
     /**
      * get yaml property
-     * @param key key&value
-     * @return values
+     * @param key the value's key, for instance: Window.theme, Body.fontsize...
+     *            use dots to attach these keys
+     * @return the value of the kye
      */
-    public Object getValueByKey(String key) {
+    public Object getValueByKey(@NotNull String key) {
         String separator = ".";
-        String[] separatorKeys = null;
+        String[] separatorKeys;
         if (key.contains(separator)) {
             separatorKeys = key.split("\\.");
         } else {
@@ -71,24 +80,5 @@ public class YamlReader {
             finalValue = (Map) finalValue.get(separatorKeys[i]);
         }
         return finalValue == null ? null : finalValue.get(separatorKeys[separatorKeys.length - 1]);
-    }
-
-    /**
-     * read in yaml
-     *
-     * @param filepath filepath
-     * @return values
-     */
-    private static String readFile(String filepath){
-        try{
-            byte[] encoded = Files.readAllBytes(Paths.get(filepath));
-            return new String (encoded, StandardCharsets.UTF_8);
-        }catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Config getConfig() {
-        return config;
     }
 }
